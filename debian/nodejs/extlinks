@@ -1,0 +1,6 @@
+domelementtype
+htmlparser2	test
+jest-diff	test
+pretty-format	text
+source-map
+@types/node

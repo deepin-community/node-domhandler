@@ -1,0 +1,119 @@
+node-domhandler (4.2.2-4) unstable; urgency=medium
+
+  * Team upload
+  * Source only upload
+
+ -- Yadd <yadd@debian.org>  Tue, 19 Oct 2021 14:23:59 +0200
+
+node-domhandler (4.2.2-3) unstable; urgency=medium
+
+  * Team upload
+  * Binary upload to avoid circular test dependencies
+
+ -- Yadd <yadd@debian.org>  Sun, 17 Oct 2021 07:52:35 +0200
+
+node-domhandler (4.2.2-2) unstable; urgency=medium
+
+  * Team upload
+  * Back to unstable
+
+ -- Yadd <yadd@debian.org>  Sat, 16 Oct 2021 08:29:16 +0200
+
+node-domhandler (4.2.2-1) experimental; urgency=medium
+
+  * Team upload
+  * New upstream version 4.2.2
+  * Remove embedded build modules
+  * Enable upstream test using jest ≥ 27
+
+ -- Yadd <yadd@debian.org>  Wed, 13 Oct 2021 13:53:30 +0200
+
+node-domhandler (4.0.0-5) unstable; urgency=medium
+
+  * Team upload
+  * Fix GitHub tags regex
+  * Declare compliance with policy 4.6.0
+
+ -- Yadd <yadd@debian.org>  Fri, 20 Aug 2021 21:29:22 +0200
+
+node-domhandler (4.0.0-4) unstable; urgency=medium
+
+  * Team upload
+  * Source-only upload
+
+ -- Xavier Guimard <yadd@debian.org>  Sun, 10 Jan 2021 20:16:33 +0100
+
+node-domhandler (4.0.0-3) unstable; urgency=medium
+
+  * Team upload
+  * Binary upload to workaround build circular dependencies
+
+ -- Xavier Guimard <yadd@debian.org>  Sun, 10 Jan 2021 09:52:18 +0100
+
+node-domhandler (4.0.0-2) unstable; urgency=medium
+
+  * Team upload
+  * Back to unstable after successful tests
+
+ -- Xavier Guimard <yadd@debian.org>  Sat, 09 Jan 2021 22:05:58 +0100
+
+node-domhandler (4.0.0-1) experimental; urgency=medium
+
+  * Team upload
+  * Declare compliance with policy 4.5.1
+  * Modernize debian/watch
+  * New upstream version 4.0.0
+  * Require node-domelementtype ≥ 2.1.0~
+
+ -- Xavier Guimard <yadd@debian.org>  Thu, 07 Jan 2021 09:34:37 +0100
+
+node-domhandler (3.3.0-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Debian Janitor ]
+  * Set upstream metadata fields: Bug-Submit.
+
+  [ Xavier Guimard ]
+  * Bump debhelper compatibility level to 13
+  * Use dh-sequence-nodejs
+  * New upstream version 3.3.0
+
+ -- Xavier Guimard <yadd@debian.org>  Sun, 18 Oct 2020 14:03:20 +0200
+
+node-domhandler (3.0.0-2) unstable; urgency=medium
+
+  * Team upload
+  * Use pkg-js-tools auto link
+  * Declare compliance with policy 4.5.0
+
+ -- Xavier Guimard <yadd@debian.org>  Fri, 01 May 2020 08:56:09 +0200
+
+node-domhandler (3.0.0-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Paolo Greppi ]
+  * Update Vcs fields for migration to https://salsa.debian.org/
+
+  [ Xavier Guimard ]
+  * Bump debhelper compatibility level to 12
+  * Declare compliance with policy 4.4.1
+  * Change section to javascript
+  * Add debian/gbp.conf
+  * Add upstream/metadata
+  * New upstream version 3.0.0
+  * Embed @types/domhandler, @types/istanbul-lib-coverage and an older
+    @types/node for build
+  * Remove patch
+  * Switch install to pkg-js-tools
+  * disable upstream test (jest not available)
+  * Update debian/copyright
+
+ -- Xavier Guimard <yadd@debian.org>  Wed, 16 Oct 2019 22:28:20 +0200
+
+node-domhandler (2.3.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #848322)
+
+ -- Paolo Greppi <paolo.greppi@libpf.com>  Fri, 16 Dec 2016 10:11:26 +0000
