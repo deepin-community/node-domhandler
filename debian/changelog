@@ -1,3 +1,57 @@
+node-domhandler (5.0.3-3) unstable; urgency=medium
+
+  * Team upload
+  * Add fix for jest 29
+
+ -- Yadd <yadd@debian.org>  Tue, 18 Oct 2022 16:01:22 +0200
+
+node-domhandler (5.0.3-2) unstable; urgency=medium
+
+  * Team upload
+  * Declare compliance with policy 4.6.1
+  * Fix build links (Closes: #1011848)
+  * Workaround bad jest config
+
+ -- Yadd <yadd@debian.org>  Sat, 28 May 2022 07:39:35 +0200
+
+node-domhandler (5.0.3-1) unstable; urgency=medium
+
+  * Team upload
+  * New upstream version 5.0.3
+
+ -- Yadd <yadd@debian.org>  Mon, 02 May 2022 09:21:15 +0200
+
+node-domhandler (5.0.2-1) unstable; urgency=medium
+
+  * Team upload
+  * New upstream version 5.0.2
+  * Build ES files
+  * Require node-domelementtype >= 2.3.0~
+
+ -- Yadd <yadd@debian.org>  Tue, 12 Apr 2022 18:19:51 +0200
+
+node-domhandler (4.3.1-1) unstable; urgency=medium
+
+  * Team upload
+  * New upstream version 4.3.1
+
+ -- Yadd <yadd@debian.org>  Mon, 21 Mar 2022 17:54:36 +0100
+
+node-domhandler (4.3.0-1) unstable; urgency=medium
+
+  * Team upload
+  * Fix filenamemangle
+  * New upstream version 4.3.0
+
+ -- Yadd <yadd@debian.org>  Tue, 04 Jan 2022 11:19:40 +0100
+
+node-domhandler (4.2.2-5) unstable; urgency=medium
+
+  * Team upload
+  * Fix build: move jest-diff to debian/nodejs/extcopies
+
+ -- Yadd <yadd@debian.org>  Mon, 06 Dec 2021 10:15:12 +0100
+
 node-domhandler (4.2.2-4) unstable; urgency=medium
 
   * Team upload

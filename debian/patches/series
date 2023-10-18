@@ -1,1 +1,3 @@
 fix-test.patch
+workaround-bad-jest-config.patch
+fix-for-jest-29.patch
