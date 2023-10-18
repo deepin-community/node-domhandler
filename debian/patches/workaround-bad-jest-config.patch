@@ -1,0 +1,16 @@
+Description: workaround bad jest config
+Author: Yadd <yadd@debian.org>
+Forwarded: not-needed
+Last-Update: 2022-05-28
+
+--- a/package.json
++++ b/package.json
+@@ -64,7 +64,7 @@
+         "preset": "ts-jest",
+         "testEnvironment": "node",
+         "moduleNameMapper": {
+-            "^(.*)\\.js$": "$1"
++            "^([^e].*)\\.js$": "$1"
+         }
+     },
+     "prettier": {

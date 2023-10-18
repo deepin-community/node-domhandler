@@ -1,3 +1,0 @@
-ts-jest		test
-@types/jest	test
-@types/source-map-support	test

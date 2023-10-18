@@ -1,6 +1,7 @@
 domelementtype
 htmlparser2	test
-jest-diff	test
-pretty-format	text
 source-map
+ts-jest		test
+@types/jest	test
 @types/node
+@types/source-map-support	test

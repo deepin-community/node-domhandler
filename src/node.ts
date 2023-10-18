@@ -1,29 +1,52 @@
 import { ElementType, isTag as isTagRaw } from "domelementtype";
 
-const nodeTypes = new Map<ElementType, number>([
-    [ElementType.Tag, 1],
-    [ElementType.Script, 1],
-    [ElementType.Style, 1],
-    [ElementType.Directive, 1],
-    [ElementType.Text, 3],
-    [ElementType.CDATA, 4],
-    [ElementType.Comment, 8],
-    [ElementType.Root, 9],
-]);
+interface SourceCodeLocation {
+    /** One-based line index of the first character. */
+    startLine: number;
+    /** One-based column index of the first character. */
+    startCol: number;
+    /** Zero-based first character index. */
+    startOffset: number;
+    /** One-based line index of the last character. */
+    endLine: number;
+    /** One-based column index of the last character. Points directly *after* the last character. */
+    endCol: number;
+    /** Zero-based last character index. Points directly *after* the last character. */
+    endOffset: number;
+}
+
+interface TagSourceCodeLocation extends SourceCodeLocation {
+    startTag?: SourceCodeLocation;
+    endTag?: SourceCodeLocation;
+}
+
+export type ParentNode = Document | Element | CDATA;
+export type ChildNode =
+    | Text
+    | Comment
+    | ProcessingInstruction
+    | Element
+    | CDATA
+    // `Document` is also used for document fragments, and can be a child node.
+    | Document;
+export type AnyNode = ParentNode | ChildNode;
 
 /**
  * This object will be used as the prototype for Nodes when creating a
  * DOM-Level-1-compliant structure.
  */
-export class Node {
+export abstract class Node {
+    /** The type of the node. */
+    abstract readonly type: ElementType;
+
     /** Parent of the node */
-    parent: NodeWithChildren | null = null;
+    parent: ParentNode | null = null;
 
     /** Previous sibling */
-    prev: Node | null = null;
+    prev: ChildNode | null = null;
 
     /** Next sibling */
-    next: Node | null = null;
+    next: ChildNode | null = null;
 
     /** The start index of the node. Requires `withStartIndices` on the handler to be `true. */
     startIndex: number | null = null;
@@ -32,38 +55,55 @@ export class Node {
     endIndex: number | null = null;
 
     /**
+     * `parse5` source code location info.
      *
-     * @param type The type of the node.
+     * Available if parsing with parse5 and location info is enabled.
      */
-    constructor(public type: ElementType) {}
+    sourceCodeLocation?: SourceCodeLocation | null;
 
     // Read-only aliases
-    get nodeType(): number {
-        return nodeTypes.get(this.type) ?? 1;
-    }
+
+    /**
+     * [DOM spec](https://dom.spec.whatwg.org/#dom-node-nodetype)-compatible
+     * node {@link type}.
+     */
+    abstract readonly nodeType: number;
 
     // Read-write aliases for properties
-    get parentNode(): NodeWithChildren | null {
+
+    /**
+     * Same as {@link parent}.
+     * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
+     */
+    get parentNode(): ParentNode | null {
         return this.parent;
     }
 
-    set parentNode(parent: NodeWithChildren | null) {
+    set parentNode(parent: ParentNode | null) {
         this.parent = parent;
     }
 
-    get previousSibling(): Node | null {
+    /**
+     * Same as {@link prev}.
+     * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
+     */
+    get previousSibling(): ChildNode | null {
         return this.prev;
     }
 
-    set previousSibling(prev: Node | null) {
+    set previousSibling(prev: ChildNode | null) {
         this.prev = prev;
     }
 
-    get nextSibling(): Node | null {
+    /**
+     * Same as {@link next}.
+     * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
+     */
+    get nextSibling(): ChildNode | null {
         return this.next;
     }
 
-    set nextSibling(next: Node | null) {
+    set nextSibling(next: ChildNode | null) {
         this.next = next;
     }
 
@@ -81,18 +121,18 @@ export class Node {
 /**
  * A node that contains some data.
  */
-export class DataNode extends Node {
+export abstract class DataNode extends Node {
     /**
-     * @param type The type of the node
      * @param data The content of the data node
      */
-    constructor(
-        type: ElementType.Comment | ElementType.Text | ElementType.Directive,
-        public data: string
-    ) {
-        super(type);
+    constructor(public data: string) {
+        super();
     }
 
+    /**
+     * Same as {@link data}.
+     * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
+     */
     get nodeValue(): string {
         return this.data;
     }
@@ -106,8 +146,10 @@ export class DataNode extends Node {
  * Text within the document.
  */
 export class Text extends DataNode {
-    constructor(data: string) {
-        super(ElementType.Text, data);
+    type: ElementType.Text = ElementType.Text;
+
+    get nodeType(): 3 {
+        return 3;
     }
 }
 
@@ -115,8 +157,10 @@ export class Text extends DataNode {
  * Comments within the document.
  */
 export class Comment extends DataNode {
-    constructor(data: string) {
-        super(ElementType.Comment, data);
+    type: ElementType.Comment = ElementType.Comment;
+
+    get nodeType(): 8 {
+        return 8;
     }
 }
 
@@ -124,52 +168,66 @@ export class Comment extends DataNode {
  * Processing instructions, including doc types.
  */
 export class ProcessingInstruction extends DataNode {
+    type: ElementType.Directive = ElementType.Directive;
+
     constructor(public name: string, data: string) {
-        super(ElementType.Directive, data);
+        super(data);
     }
 
+    override get nodeType(): 1 {
+        return 1;
+    }
+
+    /** If this is a doctype, the document type name (parse5 only). */
     "x-name"?: string;
+    /** If this is a doctype, the document type public identifier (parse5 only). */
     "x-publicId"?: string;
+    /** If this is a doctype, the document type system identifier (parse5 only). */
     "x-systemId"?: string;
 }
 
 /**
  * A `Node` that can have children.
  */
-export class NodeWithChildren extends Node {
+export abstract class NodeWithChildren extends Node {
     /**
-     * @param type Type of the node.
      * @param children Children of the node. Only certain node types can have children.
      */
-    constructor(
-        type:
-            | ElementType.Root
-            | ElementType.CDATA
-            | ElementType.Script
-            | ElementType.Style
-            | ElementType.Tag,
-        public children: Node[]
-    ) {
-        super(type);
+    constructor(public children: ChildNode[]) {
+        super();
     }
 
     // Aliases
-    get firstChild(): Node | null {
+    /** First child of the node. */
+    get firstChild(): ChildNode | null {
         return this.children[0] ?? null;
     }
 
-    get lastChild(): Node | null {
+    /** Last child of the node. */
+    get lastChild(): ChildNode | null {
         return this.children.length > 0
             ? this.children[this.children.length - 1]
             : null;
     }
 
-    get childNodes(): Node[] {
+    /**
+     * Same as {@link children}.
+     * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
+     */
+    get childNodes(): ChildNode[] {
         return this.children;
     }
 
-    set childNodes(children: Node[]) {
+    set childNodes(children: ChildNode[]) {
         this.children = children;
+    }
+}
+
+export class CDATA extends NodeWithChildren {
+    type: ElementType.CDATA = ElementType.CDATA;
+
+    get nodeType(): 4 {
+        return 4;
     }
 }
 
@@ -177,10 +235,13 @@ export class NodeWithChildren extends Node {
  * The root node of the document.
  */
 export class Document extends NodeWithChildren {
-    constructor(children: Node[]) {
-        super(ElementType.Root, children);
+    type: ElementType.Root = ElementType.Root;
+
+    get nodeType(): 9 {
+        return 9;
     }
 
+    /** [Document mode](https://dom.spec.whatwg.org/#concept-document-limited-quirks) (parse5 only). */
     "x-mode"?: "no-quirks" | "quirks" | "limited-quirks";
 }
 
@@ -206,8 +267,8 @@ export class Element extends NodeWithChildren {
     constructor(
         public name: string,
         public attribs: { [name: string]: string },
-        children: Node[] = [],
-        type:
+        children: ChildNode[] = [],
+        public type:
             | ElementType.Tag
             | ElementType.Script
             | ElementType.Style = name === "script"
@@ -216,10 +277,26 @@ export class Element extends NodeWithChildren {
             ? ElementType.Style
             : ElementType.Tag
     ) {
-        super(type, children);
+        super(children);
     }
 
+    get nodeType(): 1 {
+        return 1;
+    }
+
+    /**
+     * `parse5` source code location info, with start & end tags.
+     *
+     * Available if parsing with parse5 and location info is enabled.
+     */
+    sourceCodeLocation?: TagSourceCodeLocation | null;
+
     // DOM Level 1 aliases
+
+    /**
+     * Same as {@link name}.
+     * [DOM spec](https://dom.spec.whatwg.org)-compatible alias.
+     */
     get tagName(): string {
         return this.name;
     }
@@ -237,7 +314,11 @@ export class Element extends NodeWithChildren {
         }));
     }
 
+    /** Element namespace (parse5 only). */
+    namespace?: string;
+    /** Element attribute namespaces (parse5 only). */
     "x-attribsNamespace"?: Record<string, string>;
+    /** Element attribute namespace-related prefixes (parse5 only). */
     "x-attribsPrefix"?: Record<string, string>;
 }
 
@@ -253,7 +334,7 @@ export function isTag(node: Node): node is Element {
  * @param node Node to check.
  * @returns `true` if the node has the type `CDATA`, `false` otherwise.
  */
-export function isCDATA(node: Node): node is NodeWithChildren {
+export function isCDATA(node: Node): node is CDATA {
     return node.type === ElementType.CDATA;
 }
 
@@ -269,7 +350,7 @@ export function isText(node: Node): node is Text {
  * @param node Node to check.
  * @returns `true` if the node has the type `Comment`, `false` otherwise.
  */
-export function isComment(node: Node): node is DataNode {
+export function isComment(node: Node): node is Comment {
     return node.type === ElementType.Comment;
 }
 
@@ -291,9 +372,9 @@ export function isDocument(node: Node): node is Document {
 
 /**
  * @param node Node to check.
- * @returns `true` if the node is a `NodeWithChildren` (has children), `false` otherwise.
+ * @returns `true` if the node has children, `false` otherwise.
  */
-export function hasChildren(node: Node): node is NodeWithChildren {
+export function hasChildren(node: Node): node is ParentNode {
     return Object.prototype.hasOwnProperty.call(node, "children");
 }
 
@@ -315,6 +396,9 @@ export function cloneNode<T extends Node>(node: T, recursive = false): T {
         const clone = new Element(node.name, { ...node.attribs }, children);
         children.forEach((child) => (child.parent = clone));
 
+        if (node.namespace != null) {
+            clone.namespace = node.namespace;
+        }
         if (node["x-attribsNamespace"]) {
             clone["x-attribsNamespace"] = { ...node["x-attribsNamespace"] };
         }
@@ -325,7 +409,7 @@ export function cloneNode<T extends Node>(node: T, recursive = false): T {
         result = clone;
     } else if (isCDATA(node)) {
         const children = recursive ? cloneChildren(node.children) : [];
-        const clone = new NodeWithChildren(ElementType.CDATA, children);
+        const clone = new CDATA(children);
         children.forEach((child) => (child.parent = clone));
         result = clone;
     } else if (isDocument(node)) {
@@ -354,10 +438,15 @@ export function cloneNode<T extends Node>(node: T, recursive = false): T {
 
     result.startIndex = node.startIndex;
     result.endIndex = node.endIndex;
+
+    if (node.sourceCodeLocation != null) {
+        result.sourceCodeLocation = node.sourceCodeLocation;
+    }
+
     return result as T;
 }
 
-function cloneChildren(childs: Node[]): Node[] {
+function cloneChildren(childs: ChildNode[]): ChildNode[] {
     const children = childs.map((child) => cloneNode(child, true));
 
     for (let i = 1; i < children.length; i++) {

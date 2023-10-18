@@ -1,18 +1,17 @@
 import { ElementType } from "domelementtype";
 import {
-    Node,
+    ChildNode,
     Element,
     DataNode,
     Text,
     Comment,
-    NodeWithChildren,
+    CDATA,
     Document,
     ProcessingInstruction,
-} from "./node";
+    ParentNode,
+} from "./node.js";
 
-export * from "./node";
-
-const reWhitespace = /\s+/g;
+export * from "./node.js";
 
 export interface DomHandlerOptions {
     /**
@@ -34,16 +33,6 @@ export interface DomHandlerOptions {
     withEndIndices?: boolean;
 
     /**
-     * Replace all whitespace with single spaces.
-     *
-     * **Note:** Enabling this might break your markup.
-     *
-     * @default false
-     * @deprecated
-     */
-    normalizeWhitespace?: boolean;
-
-    /**
      * Treat the markup as XML.
      *
      * @default false
@@ -53,7 +42,6 @@ export interface DomHandlerOptions {
 
 // Default options
 const defaultOpts: DomHandlerOptions = {
-    normalizeWhitespace: false,
     withStartIndices: false,
     withEndIndices: false,
     xmlMode: false,
@@ -64,12 +52,12 @@ interface ParserInterface {
     endIndex: number | null;
 }
 
-type Callback = (error: Error | null, dom: Node[]) => void;
+type Callback = (error: Error | null, dom: ChildNode[]) => void;
 type ElementCallback = (element: Element) => void;
 
 export class DomHandler {
     /** The elements of the DOM */
-    public dom: Node[] = [];
+    public dom: ChildNode[] = [];
 
     /** The root element for the DOM */
     public root = new Document(this.dom);
@@ -87,7 +75,7 @@ export class DomHandler {
     private done = false;
 
     /** Stack of open tags. */
-    protected tagStack: NodeWithChildren[] = [this.root];
+    protected tagStack: ParentNode[] = [this.root];
 
     /** A data node that is still being written to. */
     protected lastNode: DataNode | null = null;
@@ -166,26 +154,14 @@ export class DomHandler {
     }
 
     public ontext(data: string): void {
-        const { normalizeWhitespace } = this.options;
         const { lastNode } = this;
 
         if (lastNode && lastNode.type === ElementType.Text) {
-            if (normalizeWhitespace) {
-                lastNode.data = (lastNode.data + data).replace(
-                    reWhitespace,
-                    " "
-                );
-            } else {
-                lastNode.data += data;
-            }
+            lastNode.data += data;
             if (this.options.withEndIndices) {
                 lastNode.endIndex = this.parser!.endIndex;
             }
         } else {
-            if (normalizeWhitespace) {
-                data = data.replace(reWhitespace, " ");
-            }
-
             const node = new Text(data);
             this.addNode(node);
             this.lastNode = node;
@@ -209,7 +185,7 @@ export class DomHandler {
 
     public oncdatastart(): void {
         const text = new Text("");
-        const node = new NodeWithChildren(ElementType.CDATA, [text]);
+        const node = new CDATA([text]);
 
         this.addNode(node);
 
@@ -234,10 +210,10 @@ export class DomHandler {
         }
     }
 
-    protected addNode(node: Node): void {
+    protected addNode(node: ChildNode): void {
         const parent = this.tagStack[this.tagStack.length - 1];
         const previousSibling = parent.children[parent.children.length - 1] as
-            | Node
+            | ChildNode
             | undefined;
 
         if (this.options.withStartIndices) {
