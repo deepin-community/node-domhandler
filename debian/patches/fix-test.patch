@@ -1,7 +1,8 @@
 Description: these tests fail when running on Debian env (but succeeds with local npm i)
-Author: Yadd <yadd@debian.org>
+  The src/index.spec.ts changes makes it work for typescript 4.9.5.
+Author: Yadd <yadd@debian.org>, Ananthu C V <weepingclown@disroot.org>
 Forwarded: not-needed
-Last-Update: 2021-10-13
+Last-Update: 2023-11-15
 
 --- a/src/__fixtures__/24-with-start-indices.json
 +++ /dev/null
@@ -187,3 +188,22 @@ Last-Update: 2021-10-13
      });
  
      it("should throw an error when cloning unsupported types", () => {
+--- a/src/index.spec.ts
++++ b/src/index.spec.ts
+@@ -48,14 +48,14 @@
+     return results[0];
+ }
+ 
+-function compare<T>(actual: T, expected: T) {
++function compare<T extends object>(actual: T, expected: T) {
+     expect(typeof actual).toBe(typeof expected);
+     if (typeof expected !== "object" || expected === null) {
+         expect(actual).toBe(expected);
+     } else {
+         for (const prop in expected) {
+             expect(prop in actual).toBeTruthy();
+-            compare(actual[prop], expected[prop]);
++            compare((actual as any)[prop], (expected as any)[prop]);
+         }
+     }
+ }
